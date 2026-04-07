@@ -34,6 +34,19 @@ namespace FeatBit.Sdk.Server.Options
         public bool DisableEvents { get; set; }
 
         /// <summary>
+        /// Whether to track the duration of each flag evaluation and report it via
+        /// <see cref="System.Diagnostics.Metrics"/> (histogram) and <see cref="System.Diagnostics.ActivitySource"/>
+        /// (span), and include it in the insight event payload sent to the FeatBit server.
+        /// </summary>
+        /// <remarks>
+        /// Disabled by default to avoid any overhead when telemetry is not needed.
+        /// When enabled, consumers can observe the <c>FeatBit.ServerSdk</c> meter and activity source
+        /// using OpenTelemetry or any compatible listener.
+        /// </remarks>
+        /// <value>Defaults to <c>false</c></value>
+        public bool TrackEvaluationDuration { get; set; }
+
+        /// <summary>
         /// The SDK key for your FeatBit environment.
         /// </summary>
         public string EnvSecret { get; set; }
@@ -138,6 +151,7 @@ namespace FeatBit.Sdk.Server.Options
             TimeSpan startWaitTime,
             bool offline,
             bool disableEvents,
+            bool trackEvaluationDuration,
             string envSecret,
             Uri streamingUri,
             Uri eventUri,
@@ -158,6 +172,7 @@ namespace FeatBit.Sdk.Server.Options
             StartWaitTime = startWaitTime;
             Offline = offline;
             DisableEvents = disableEvents;
+            TrackEvaluationDuration = trackEvaluationDuration;
 
             EnvSecret = envSecret;
             StreamingUri = streamingUri;
@@ -182,7 +197,8 @@ namespace FeatBit.Sdk.Server.Options
 
         internal FbOptions ShallowCopy()
         {
-            var newOptions = new FbOptions(StartWaitTime, Offline, DisableEvents, EnvSecret, StreamingUri, EventUri,
+            var newOptions = new FbOptions(StartWaitTime, Offline, DisableEvents, TrackEvaluationDuration,
+                EnvSecret, StreamingUri, EventUri,
                 ConnectTimeout, CloseTimeout, KeepAliveInterval, ReconnectRetryDelays, MaxFlushWorker,
                 AutoFlushInterval, FlushTimeout, MaxEventsInQueue, MaxEventPerRequest, MaxSendEventAttempts,
                 SendEventRetryInterval, BootstrapProvider, LoggerFactory);

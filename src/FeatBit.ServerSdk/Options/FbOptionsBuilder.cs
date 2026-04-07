@@ -11,6 +11,7 @@ namespace FeatBit.Sdk.Server.Options
         private TimeSpan _startWaitTime;
         private bool _offline;
         private bool _disableEvents;
+        private bool _trackEvaluationDuration;
 
         private readonly string _envSecret;
 
@@ -43,6 +44,7 @@ namespace FeatBit.Sdk.Server.Options
             _startWaitTime = TimeSpan.FromSeconds(5);
             _offline = false;
             _disableEvents = false;
+            _trackEvaluationDuration = false;
 
             _envSecret = envSecret;
 
@@ -72,7 +74,8 @@ namespace FeatBit.Sdk.Server.Options
 
         public FbOptions Build()
         {
-            return new FbOptions(_startWaitTime, _offline, _disableEvents, _envSecret, _streamingUri, _eventUri,
+            return new FbOptions(_startWaitTime, _offline, _disableEvents, _trackEvaluationDuration,
+                _envSecret, _streamingUri, _eventUri,
                 _connectTimeout, _closeTimeout, _keepAliveInterval, _reconnectRetryDelays, _maxFlushWorker,
                 _autoFlushInterval, _flushTimeout, _maxEventsInQueue, _maxEventPerRequest, _maxSendEventAttempts,
                 _sendEventRetryInterval, _bootstrapProvider, _loggerFactory);
@@ -127,6 +130,20 @@ namespace FeatBit.Sdk.Server.Options
         public FbOptionsBuilder DisableEvents(bool disableEvents)
         {
             _disableEvents = disableEvents;
+            return this;
+        }
+
+        /// <summary>
+        /// Enables or disables tracking of flag evaluation duration.
+        /// When enabled, elapsed time is reported via a <see cref="System.Diagnostics.Metrics"/> histogram
+        /// (<c>featbit.flag.evaluation.duration</c>, unit: <c>ms</c>), via an
+        /// <see cref="System.Diagnostics.ActivitySource"/> span (<c>featbit.flag.evaluation</c>),
+        /// and as a <c>durationMs</c> field in the insight event sent to the FeatBit server.
+        /// </summary>
+        /// <value>Defaults to <c>false</c></value>
+        public FbOptionsBuilder TrackEvaluationDuration(bool trackEvaluationDuration)
+        {
+            _trackEvaluationDuration = trackEvaluationDuration;
             return this;
         }
 

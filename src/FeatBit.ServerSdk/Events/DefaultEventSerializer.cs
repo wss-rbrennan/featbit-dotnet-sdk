@@ -63,6 +63,11 @@ namespace FeatBit.Sdk.Server.Events
             WriteVariation(ee.Variation, writer);
             writer.WriteNumber("timestamp", ee.Timestamp);
             writer.WriteBoolean("sendToExperiment", ee.SendToExperiment);
+            if (ee.DurationMs >= 0)
+            {
+                writer.WriteNumber("durationMs", ee.DurationMs);
+            }
+
             writer.WriteEndObject();
 
             writer.WriteEndArray();

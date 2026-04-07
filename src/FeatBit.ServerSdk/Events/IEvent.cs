@@ -73,6 +73,13 @@ namespace FeatBit.Sdk.Server.Events
 
         public bool SendToExperiment { get; set; }
 
+        /// <summary>
+        /// The duration of the flag evaluation in milliseconds.
+        /// Only set when <see cref="Options.FbOptions.TrackEvaluationDuration"/> is enabled.
+        /// A value of -1 indicates that duration was not measured.
+        /// </summary>
+        public double DurationMs { get; set; } = -1;
+
         public EvalEvent(FbUser user, string flagKey, Variation variation, bool sendToExperiment)
         {
             User = user;

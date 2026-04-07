@@ -1,4 +1,5 @@
 using System;
+using System.Diagnostics;
 using System.Linq;
 using System.Threading.Tasks;
 using FeatBit.Sdk.Server.DataSynchronizer;
@@ -7,6 +8,7 @@ using FeatBit.Sdk.Server.Events;
 using FeatBit.Sdk.Server.Model;
 using FeatBit.Sdk.Server.Options;
 using FeatBit.Sdk.Server.Store;
+using FeatBit.Sdk.Server.Telemetry;
 using Microsoft.Extensions.Logging;
 
 namespace FeatBit.Sdk.Server
@@ -340,7 +342,48 @@ namespace FeatBit.Sdk.Server
                 FbUser = user
             };
 
-            var (evalResult, evalEvent) = _evaluator.Evaluate(ctx);
+            EvalResult evalResult;
+            EvalEvent evalEvent;
+
+            if (_options.TrackEvaluationDuration)
+            {
+                var startTimestamp = Stopwatch.GetTimestamp();
+
+                (evalResult, evalEvent) = _evaluator.Evaluate(ctx);
+
+                var elapsedMs = (Stopwatch.GetTimestamp() - startTimestamp) * 1000.0 / Stopwatch.Frequency;
+
+                // Metrics histogram
+                FeatBitSdkMeter.EvaluationDuration.Record(
+                    elapsedMs,
+                    new System.Collections.Generic.KeyValuePair<string, object>("flag.key", key),
+                    new System.Collections.Generic.KeyValuePair<string, object>("result.kind", evalResult.Kind.ToString())
+                );
+
+                // Activity span
+                var activity = FeatBitSdkActivitySource.ActivitySource.StartActivity(
+                    FeatBitSdkActivitySource.EvaluationActivityName,
+                    ActivityKind.Internal
+                );
+                if (activity != null)
+                {
+                    activity.SetTag("flag.key", key);
+                    activity.SetTag("result.kind", evalResult.Kind.ToString());
+                    activity.SetTag("result.reason", evalResult.Reason);
+                    activity.Stop();
+                }
+
+                // Insight payload duration
+                if (evalEvent != null)
+                {
+                    evalEvent.DurationMs = elapsedMs;
+                }
+            }
+            else
+            {
+                (evalResult, evalEvent) = _evaluator.Evaluate(ctx);
+            }
+
             if (evalResult.Kind == ReasonKind.Error)
             {
                 // error happened when evaluate flag, return default value 
